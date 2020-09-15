@@ -311,7 +311,7 @@ DumpMachine(CRYPTOPP_POWERPC64 "ppc64")
 ###############################################################################
 
 # Test SunCC for a string like 'CC: Sun C++ 5.13 SunOS_i386'
-if (NOT CRYPTOPP_SOLARIS)
+if (NOT MSVC AND NOT CRYPTOPP_SOLARIS)
   execute_process(COMMAND sh -c "${CMAKE_CXX_COMPILER} -V 2>&1"
     COMMAND ${GREP_CMD} -i -c "SunOS"
     OUTPUT_VARIABLE CRYPTOPP_SOLARIS
@@ -319,7 +319,7 @@ if (NOT CRYPTOPP_SOLARIS)
 endif ()
 
 # Test GCC for a string like 'i386-pc-solaris2.11'
-if (NOT CRYPTOPP_SOLARIS)
+if (NOT MSVC AND NOT CRYPTOPP_SOLARIS)
   execute_process(COMMAND sh -c "${CMAKE_CXX_COMPILER} -dumpmachine 2>&1"
     COMMAND ${GREP_CMD} -i -c "Solaris"
     OUTPUT_VARIABLE CRYPTOPP_SOLARIS
@@ -447,7 +447,6 @@ if (MSVC)
   if (CMAKE_SYSTEM_VERSION MATCHES "10\\.0.*")
     list(APPEND CRYPTOPP_COMPILE_DEFINITIONS "_WIN32_WINNT=0x0A00")
   endif ()
-  list(APPEND CRYPTOPP_COMPILE_OPTIONS "/FI\"winapifamily.h\"")
 endif ()
 
 # Enable PIC for all target machines except 32-bit i386 due to register pressures.
@@ -1042,20 +1041,18 @@ if (BUILD_SHARED)
 endif ()
 
 # Set filenames for targets to be "cryptopp"
-if (NOT MSVC)
-  set(COMPAT_VERSION ${cryptopp_VERSION_MAJOR}.${cryptopp_VERSION_MINOR})
+set(COMPAT_VERSION ${cryptopp_VERSION_MAJOR}.${cryptopp_VERSION_MINOR})
 
-  if (BUILD_STATIC)
-    set_target_properties(cryptopp-static
-        PROPERTIES
-        OUTPUT_NAME cryptopp)
-  endif ()
-  if (BUILD_SHARED)
-    set_target_properties(cryptopp-shared
-        PROPERTIES
-        SOVERSION ${COMPAT_VERSION}
-        OUTPUT_NAME cryptopp)
-  endif ()
+if (BUILD_STATIC)
+  set_target_properties(cryptopp-static
+      PROPERTIES
+      OUTPUT_NAME cryptopp)
+endif ()
+if (BUILD_SHARED)
+  set_target_properties(cryptopp-shared
+      PROPERTIES
+      SOVERSION ${COMPAT_VERSION}
+      OUTPUT_NAME cryptopp)
 endif ()
 
 # Add alternate ways to invoke the build for the shared library that are
@@ -1112,10 +1109,6 @@ if (BUILD_TESTING)
   # Setting "cryptest" binary name to "cryptest.exe"
   if (NOT (WIN32 OR CYGWIN))
     set_target_properties(cryptest PROPERTIES OUTPUT_NAME cryptest.exe)
-  endif ()
-  if (NOT TARGET cryptest.exe)
-    add_custom_target(cryptest.exe)
-    add_dependencies(cryptest.exe cryptest)
   endif ()
 
   file(COPY ${SRC_DIR}/TestData DESTINATION ${PROJECT_BINARY_DIR})
